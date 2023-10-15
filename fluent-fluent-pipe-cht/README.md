@@ -8,15 +8,11 @@ a CHT analysis using System Coupling.
 The purpose of this example is to demonstrate the integration
 of pyFluent and pySystemCoupling.
 
-# pyAnsys instrutions
+The starting point for this example is Fluent mesh files.
+The Python script will set up the Fluent problem and have
+System Coupling solve the coupled analysis.
 
-- Make venv
-
-`python -m venv venv`
-
-- Activate venv
-
-`venv\Scripts\activate.bat`
+# Instrutions
 
 - Install pyFluent
 
@@ -24,10 +20,7 @@ of pyFluent and pySystemCoupling.
 
 - Install pySystemCoupling
 
-`pip install ansys_systemcoupling_core-0.1.dev0-py3-none-any.whl`
-
-- Force Fluent to use 23.1 version (well at least I needed to do this)
-`set AWP_ROOT222=%AWP_ROOT231%`
+`pip install ansys.systemcoupling.core`
 
 - Run script
 
