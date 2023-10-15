@@ -1,5 +1,3 @@
-import os
-
 import ansys.fluent.core as pyfluent
 import ansys.systemcoupling.core as pysyc
 
