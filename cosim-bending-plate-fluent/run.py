@@ -6,7 +6,6 @@ from mapdl_proxy import Mapdl_SessionProxy
 
 """
 TODO:
-- fix fluent displacement bug: https://github.com/ansys/pyfluent/pull/2145
 - pymapdl additional_switches case issue: https://github.com/ansys/pymapdl/discussions/2418
 - mapdl.exit() throws exception when connected to System Coupling "The /EXIT command is not permitted in server mode."
 - mapdl should (probably) disconnect during mapdl.finish()
@@ -23,12 +22,8 @@ mapdl.prep7()
 # define material properties
 mapdl.mp("DENS", 1, 2550)
 mapdl.mp("ALPX", 1, 1.2e-05)
-mapdl.mp("C", 1, 434)
-mapdl.mp("KXX", 1, 60.5)
-mapdl.mp("RSVX", 1, 1.7e-07)
 mapdl.mp("EX", 1, 2500000)
 mapdl.mp("NUXY", 1, 0.35)
-mapdl.mp("MURX", 1, 10000)
 
 # set element types to SOLID186
 mapdl.et(1, 186)
@@ -43,9 +38,9 @@ mapdl.nsel("S", "LOC", "Y", 0)
 mapdl.d("all", "all")
 
 # add FSI interface
-mapdl.nsel("S", "LOC", "X", 10.0)
-mapdl.nsel("A", "LOC", "Y", 1.0)
-mapdl.nsel("A", "LOC", "X", 10.06)
+mapdl.nsel("S", "LOC", "X", 9.99, 10.01)
+mapdl.nsel("A", "LOC", "Y", 0.99, 1.01)
+mapdl.nsel("A", "LOC", "X", 10.05, 10.07)
 mapdl.cm("FSIN_1", "NODE")
 mapdl.sf("FSIN_1", "FSIN", 1)
 
