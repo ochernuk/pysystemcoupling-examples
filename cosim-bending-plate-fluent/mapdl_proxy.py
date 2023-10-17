@@ -75,7 +75,7 @@ class Mapdl_SessionProxy(object):
             self.__handle._mapdl_session.solve()
             self.__handle._mapdl_session.finish()
             # temporary
-            self.__handle._mapdl_session.exit()
+            self.__handle._mapdl_session.exit(force = True)
             del self.__handle._mapdl_session
             self.__handle._mapdl_session = None
 
