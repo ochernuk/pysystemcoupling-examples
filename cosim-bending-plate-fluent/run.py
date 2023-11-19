@@ -7,9 +7,10 @@ from mapdl_proxy import Mapdl_SessionProxy
 """
 TODO:
 - pymapdl additional_switches case issue: https://github.com/ansys/pymapdl/discussions/2418
-- mapdl.exit() throws exception when connected to System Coupling "The /EXIT command is not permitted in server mode."
-- mapdl should (probably) disconnect during mapdl.finish()
-- need to add a new mapdl command to connect to System Coupling, something like mapdl.scconn(host, port, name)
+  - fixed - waiting for a new release
+- mapdl should disconnect at the end of mapdl.solve()
+  - fixed - waiting for a new release
+- need to add a new mapdl command to connect to System Coupling, something like mapdl.scconnect(host, port, name)
 - integrate Mapdl_SessionProxy proxy code into the repo
 """
 
