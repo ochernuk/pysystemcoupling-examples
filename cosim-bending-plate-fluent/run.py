@@ -1,13 +1,3 @@
-"""
-For now this requires setting AWP_ROOT env var to AWP_ROOT242, because
-24.2 is not yet officially supported by PyAnsys products.
-
-TODO:
-- pymapdl additional_switches case issue: https://github.com/ansys/pymapdl/discussions/2418
-  - fixed - waiting for a new release
-- integrate Mapdl_SessionProxy proxy code into the repo
-"""
-
 import ansys.mapdl.core as pymapdl
 import ansys.fluent.core as pyfluent
 import ansys.systemcoupling.core as pysyc

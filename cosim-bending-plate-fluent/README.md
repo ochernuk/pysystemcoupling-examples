@@ -7,6 +7,13 @@ a steady FSI analysis using System Coupling.
 
 # Instrutions
 
+This requires latest v242 build, so set AWP_ROOT environment variable 
+to AWP_ROOT242. On Windows:
+`set AWP_ROOT=%AWP_ROOT242%`
+
+On Linux:
+`export AWP_ROOT=$AWP_ROOT242`
+
 - Install pyFluent
 
 `pip install ansys.fluent.core`
