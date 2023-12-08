@@ -6,23 +6,13 @@ from typing import List
 class Mapdl_SessionProxy(object):
     """
     This proxy class is a wrapper around the actual PyMAPDL solver session.
-    It is needed to work around the requirement to connect to System Coupling
-    after the solver session is started.
 
     When launching MAPDL session, just create an instance of this proxy class
 
     mapdl = Mapdl_SessionProxy()
 
     and then interact with the mapdl object as if it were a real mapdl
-    session handle. In reality, all commands will first be recored
-    internally in the proxy object, and then passed through to the
-    underlying mapdl session handle.
-
-    When solving the coupled analysis using System Coupling, this proxy
-    object will quit the original mapdl session, start a new one that will
-    be connected to System Coupling, and will replay all the commands
-    that were provided to the original session (in the original order).
-
+    session handle.
     """
 
     class SystemCouplingInterface(object):
@@ -67,17 +57,10 @@ class Mapdl_SessionProxy(object):
             return self.__analysis_type
 
         def connect(self, host, port, name):
-            self.__handle._mapdl_session.exit()
-            self.__handle._mapdl_session = pymapdl.launch_mapdl(additional_switches = f"-scport {port} -schost {host} -scname {name}")
+            self.__handle._mapdl_session.run(f"scconnect,{host},{port},{name}")
 
         def solve(self):
-            self.__handle._replay()
             self.__handle._mapdl_session.solve()
-            self.__handle._mapdl_session.finish()
-            # temporary
-            self.__handle._mapdl_session.exit(force = True)
-            del self.__handle._mapdl_session
-            self.__handle._mapdl_session = None
 
         def _add_surface_region(self, region_name):
             region = Mapdl_SessionProxy.SystemCouplingInterface.Region(name=region_name, display_name = f"System Coupling (Surface) Region {len(self.__regions)}", topology = "Surface", input_variables = list(), output_variables = list())
@@ -150,44 +133,34 @@ class Mapdl_SessionProxy(object):
     def __init__(self, *args, **kwargs):
         self.system_coupling = Mapdl_SessionProxy.SystemCouplingInterface(self)
         self._mapdl_session = pymapdl.launch_mapdl(*args, **kwargs)
-        self._command_stack = list()
 
     def __getattr__(self, attr):
-        if attr not in {"eplot"}: # certain commands will need to be ignored when replaying
-            self._command_stack.append([attr])
-            return self.__handle
-        else:
-            return getattr(self._mapdl_session, attr)
+        if attr == "sf": return self.__sf_handle
+        elif attr == "bfe": return self.__bfe_handle
+        elif attr == "antype": return self.__antype_handle
+        elif attr == "et": return self.__et_handle
+        else: return getattr(self._mapdl_session, attr)
 
-    def __handle(self, *args, **kwargs):
-        cmd = self._command_stack[-1][0]
-        for arg in args: self._command_stack[-1].append(arg)
-        for k, v in kwargs.items(): self._command_stack[-1].append({k:v})
-        if cmd == "sf" and args[1].upper() == "FSIN":
-            region_name = args[0]
-            self.system_coupling._add_surface_region(region_name)
-        elif cmd == "bfe" and args[1].upper() == "FVIN":
-            region_name = args[0]
-            self.system_coupling._add_volume_region(region_name)
-        elif cmd == "antype":
-            if args[0] == 0: self.system_coupling._set_steady()
-            elif args[0] == 4: self.system_coupling._set_transient()
-        elif cmd == "et":
-            etype = args[1]
-            # TODO: the elements list is far from complete
-            if etype in {186}:
-                self.system_coupling._activate_structural()
-            if etype in {70,90}:
-                self.system_coupling._activate_thermal()
-        getattr(self._mapdl_session, cmd)(*args, **kwargs)
+    def __sf_handle(self, *args, **kwargs):
+        region_name = args[0]
+        self.system_coupling._add_surface_region(region_name)
+        return getattr(self._mapdl_session, "sf")(*args, **kwargs)
 
-    def _replay(self):
-        for cmd in self._command_stack:
-            if len(cmd) == 1:
-                getattr(self._mapdl_session, cmd[0])()               
-            else:
-                getattr(self._mapdl_session, cmd[0])(*cmd[1:])        
+    def __bfe_handle(self, *args, **kwargs):
+        region_name = args[0]
+        self.system_coupling._add_volume_region(region_name)
+        return getattr(self._mapdl_session, "bfe")(*args, **kwargs)
 
-    def print_commands(self):
-        import pprint
-        pprint.pprint(self._command_stack)
+    def __antype_handle(self, *args, **kwargs):
+        if args[0] == 0: self.system_coupling._set_steady()
+        elif args[0] == 4: self.system_coupling._set_transient()
+        return getattr(self._mapdl_session, "antype")(*args, **kwargs)
+
+    def __et_handle(self, *args, **kwargs):
+        etype = args[1]
+        # TODO: the elements list is far from complete
+        if etype in {186}:
+            self.system_coupling._activate_structural()
+        if etype in {70,90}:
+            self.system_coupling._activate_thermal()
+        return getattr(self._mapdl_session, "et")(*args, **kwargs)

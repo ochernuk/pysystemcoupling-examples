@@ -1,18 +1,18 @@
+"""
+For now this requires setting AWP_ROOT env var to AWP_ROOT242, because
+24.2 is not yet officially supported by PyAnsys products.
+
+TODO:
+- pymapdl additional_switches case issue: https://github.com/ansys/pymapdl/discussions/2418
+  - fixed - waiting for a new release
+- integrate Mapdl_SessionProxy proxy code into the repo
+"""
+
 import ansys.mapdl.core as pymapdl
 import ansys.fluent.core as pyfluent
 import ansys.systemcoupling.core as pysyc
 
 from mapdl_proxy import Mapdl_SessionProxy
-
-"""
-TODO:
-- pymapdl additional_switches case issue: https://github.com/ansys/pymapdl/discussions/2418
-  - fixed - waiting for a new release
-- mapdl should disconnect at the end of mapdl.solve()
-  - fixed - waiting for a new release
-- need to add a new mapdl command to connect to System Coupling, something like mapdl.scconnect(host, port, name)
-- integrate Mapdl_SessionProxy proxy code into the repo
-"""
 
 #================================
 
@@ -54,14 +54,14 @@ mapdl.antype(0)
 
 #================================
 
-fluent = pyfluent.launch_fluent(product_version="24.1.0", start_transcript=False)
+fluent = pyfluent.launch_fluent(start_transcript=False)
 case_file = "case.cas.gz"
 fluent.file.read(file_type="case", file_name="case.cas.h5")
 fluent.solution.run_calculation.iter_count = 1
 
 #================================
 
-syc = pysyc.launch(version = "24.1")
+syc = pysyc.launch()
 syc.start_output()
 
 fluid_name = syc.setup.add_participant(participant_session = fluent)
@@ -96,3 +96,16 @@ syc.setup.add_data_transfer(
 syc.setup.solution_control.maximum_iterations = 20
 
 syc.solution.solve()
+
+# post-process strutural results
+mapdl.post1()
+
+mapdl.result.plot_nodal_displacement(
+    rnum = 0,
+    show_displacement=True,
+    show_edges=True,
+)
+
+syc.exit()
+fluent.exit()
+mapdl.exit()
