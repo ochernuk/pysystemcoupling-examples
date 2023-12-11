@@ -54,14 +54,12 @@ fluent.solution.run_calculation.iter_count = 1
 syc = pysyc.launch()
 syc.start_output()
 
+# add participants
 fluid_name = syc.setup.add_participant(participant_session = fluent)
 solid_name = syc.setup.add_participant(participant_session = mapdl)
 
 syc.setup.coupling_participant[fluid_name].display_name = "Fluid"
 syc.setup.coupling_participant[solid_name].display_name = "Solid"
-
-# temporary until bug is fixed
-syc.setup.coupling_participant[fluid_name].variable["displacement"].tensor_type = "Vector"
 
 # add a coupling interface
 interface = syc.setup.add_interface(
@@ -83,7 +81,7 @@ syc.setup.add_data_transfer(
     target_variable = "FDNS",
 )
 
-syc.setup.solution_control.maximum_iterations = 20
+syc.setup.solution_control.maximum_iterations = 40
 
 syc.solution.solve()
 
@@ -96,6 +94,7 @@ mapdl.result.plot_nodal_displacement(
     show_edges=True,
 )
 
+# exit
 syc.exit()
 fluent.exit()
 mapdl.exit()
