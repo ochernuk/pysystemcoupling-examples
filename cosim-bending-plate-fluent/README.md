@@ -14,17 +14,9 @@ to AWP_ROOT242. On Windows:
 On Linux:
 `export AWP_ROOT=$AWP_ROOT242`
 
-- Install pyFluent
+- Install PyFluent, PyMapdl, and PySystemCoupling
 
-`pip install ansys.fluent.core`
-
-- Install pyMapdl
-
-`pip install ansys.mapdl.core`
-
-- Install pySystemCoupling
-
-`pip install ansys.systemcoupling.core`
+`pip install ansys.fluent.core ansys.mapdl.core ansys.systemcoupling.core`
 
 - Run script
 
