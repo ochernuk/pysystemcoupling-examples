@@ -3,53 +3,42 @@ import ansys.systemcoupling.core as pysyc
 
 #===
 
-pipe_fluid_meshing = pyfluent.launch_fluent(product_version="24.1.0", mode="meshing", start_transcript=False)
-pipe_fluid_meshing.workflow.InitializeWorkflow(WorkflowType="Watertight Geometry")
+pipe_fluid_meshing = pyfluent.launch_fluent(product_version="24.1.0", mode="meshing", start_transcript=True)
+watertight = pipe_fluid_meshing.watertight()
 
-pipe_fluid_meshing.workflow.TaskObject["Import Geometry"].Arguments = {
-    "FileName": "pipe_fluid.scdoc",
-    "LengthUnit": "m",
-}
+watertight.import_geometry.arguments.set_state(dict(FileName="pipe_fluid.scdoc", LengthUnit="m"))
+watertight.import_geometry.Execute()
 
-pipe_fluid_meshing.workflow.TaskObject["Import Geometry"].Execute()
+add_local_sizing = watertight.add_local_sizing
+add_local_sizing.Execute()
 
-pipe_fluid_meshing.workflow.TaskObject["Add Local Sizing"].AddChildToTask()
-pipe_fluid_meshing.workflow.TaskObject["Add Local Sizing"].Execute()
+generate_surface_mesh = watertight.TaskObject["Generate the Surface Mesh"]
+generate_surface_mesh.arguments.set_state(dict(CFDSurfaceMeshControls={"MaxSize": 0.025}))
+generate_surface_mesh.Execute()
 
-pipe_fluid_meshing.workflow.TaskObject["Generate the Surface Mesh"].Arguments = {
-    "CFDSurfaceMeshControls": {"MaxSize": 0.025}
-}
+describe_geometry = watertight.describe_geometry
+describe_geometry.UpdateChildTasks(SetupTypeChanged = False)
+describe_geometry.arguments.set_state(dict(SetupType = "The geometry consists of only fluid regions with no voids"))
+describe_geometry.Execute()
 
-pipe_fluid_meshing.workflow.TaskObject["Generate the Surface Mesh"].Execute()
+# update_boundaries does not work
+update_boundaries = watertight.TaskObject["Update Boundaries"]
+ubargs = dict(
+    BoundaryLabelList = ["inlet", "outlet", "wall"],
+    BoundaryLabelTypeList = ["velocity-inlet", "pressure-outlet", "wall"],
+    OldBoundaryLabelList = ["inlet", "outlet", "wall"],
+    OldBoundaryLabelTypeList = ["velocity-inlet", "pressure outlet", "wall"])
+update_boundaries.arguments.set_state(ubargs)
+update_boundaries.Execute()
 
-pipe_fluid_meshing.workflow.TaskObject["Describe Geometry"].UpdateChildTasks(
-    SetupTypeChanged=False
-)
+update_regions = watertight.update_regions
+update_regions.Execute()
 
-pipe_fluid_meshing.workflow.TaskObject["Describe Geometry"].Arguments = {
-    "SetupType": "The geometry consists of only fluid regions with no voids"
-}
-
-pipe_fluid_meshing.workflow.TaskObject["Describe Geometry"].UpdateChildTasks(SetupTypeChanged=True)
-pipe_fluid_meshing.workflow.TaskObject["Describe Geometry"].Execute()
-
-pipe_fluid_meshing.workflow.TaskObject["Update Boundaries"].Arguments = {
-    "BoundaryLabelList": ["inlet", "outlet", "wall"],
-    "BoundaryLabelTypeList": ["velocity-inlet", "pressure-outlet", "wall"],
-    "OldBoundaryLabelList": ["inlet", "outlet", "wall"],
-    "OldBoundaryLabelTypeList": ["velocity-inlet", "pressure outlet", "wall"],
-}
-pipe_fluid_meshing.workflow.TaskObject["Update Boundaries"].Execute()
-
-pipe_fluid_meshing.workflow.TaskObject["Update Regions"].Execute()
-
-pipe_fluid_meshing.workflow.TaskObject["Add Boundary Layers"].AddChildToTask()
-pipe_fluid_meshing.workflow.TaskObject["Add Boundary Layers"].InsertCompoundChildTask()
-pipe_fluid_meshing.workflow.TaskObject["smooth-transition_1"].Arguments = {
-    "BLControlName": "smooth-transition_1",
-}
-pipe_fluid_meshing.workflow.TaskObject["Add Boundary Layers"].Arguments = {}
-pipe_fluid_meshing.workflow.TaskObject["smooth-transition_1"].Execute()
+add_boundary_layers = watertight.TaskObject["Add Boundary Layers"]
+add_boundary_layers.AddChildToTask()
+add_boundary_layers.InsertCompoundChildTask()
+add_boundary_layers.arguments.set_state(dict(BLControlName = "smooth-transition_1"))
+add_boundary_layers.Execute()
 
 pipe_fluid_meshing.workflow.TaskObject["Generate the Volume Mesh"].Arguments = {
     "VolumeFill": "poly-hexcore",
@@ -57,7 +46,10 @@ pipe_fluid_meshing.workflow.TaskObject["Generate the Volume Mesh"].Arguments = {
         "HexMaxCellLength": 0.025,
     },
 }
-pipe_fluid_meshing.workflow.TaskObject["Generate the Volume Mesh"].Execute()
+
+generate_volume_mesh = watertight.TaskObject["Generate the Volume Mesh"]
+generate_volume_mesh.arguments.set_state(dict(VolumeFill = "poly-hexcore", VolumeFillControls = {"HexMaxCellLength": 0.025}))
+generate_volume_mesh.Execute()
 
 pipe_fluid_session = pipe_fluid_meshing.switch_to_solver()
 
