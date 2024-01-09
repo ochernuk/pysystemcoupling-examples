@@ -44,8 +44,8 @@ mapdl.antype(0)
 
 #================================
 
+# open Fluent and read in the pre-created case file
 fluent = pyfluent.launch_fluent(start_transcript=False)
-case_file = "case.cas.gz"
 fluent.file.read(file_type="case", file_name="case.cas.h5")
 fluent.solution.run_calculation.iter_count = 1
 
@@ -62,20 +62,20 @@ syc.setup.coupling_participant[fluid_name].display_name = "Fluid"
 syc.setup.coupling_participant[solid_name].display_name = "Solid"
 
 # add a coupling interface
-interface = syc.setup.add_interface(
+interface_name = syc.setup.add_interface(
   side_one_participant = fluid_name, side_one_regions = ["wall_deforming"],
   side_two_participant = solid_name, side_two_regions = ["FSIN_1"])
 
 # set up 2-way FSI coupling - add force & displacement data transfers
 syc.setup.add_data_transfer(
-    interface = interface,
+    interface = interface_name,
     target_side = "One",
     source_variable = "INCD",
     target_variable = "displacement",
 )
 
 syc.setup.add_data_transfer(
-    interface = interface,
+    interface = interface_name,
     target_side = "Two",
     source_variable = "force",
     target_variable = "FDNS",
@@ -83,6 +83,7 @@ syc.setup.add_data_transfer(
 
 syc.setup.solution_control.maximum_iterations = 40
 
+# solve the coupled analysis
 syc.solution.solve()
 
 # post-process strutural results
