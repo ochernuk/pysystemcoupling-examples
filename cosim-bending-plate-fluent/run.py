@@ -67,9 +67,19 @@ interface_name = syc.setup.add_interface(
   side_two_participant = solid_name, side_two_regions = ["FSIN_1"])
 
 # set up 2-way FSI coupling - add force & displacement data transfers
-syc.setup.add_fsi_data_transfers(
-  interface = interface_name,
-  use_force_density = True)
+syc.setup.add_data_transfer(
+    interface = interface_name,
+    target_side = "One",
+    source_variable = "INCD",
+    target_variable = "displacement",
+)
+
+syc.setup.add_data_transfer(
+    interface = interface_name,
+    target_side = "Two",
+    source_variable = "force",
+    target_variable = "FDNS",
+)
 
 syc.setup.solution_control.maximum_iterations = 40
 

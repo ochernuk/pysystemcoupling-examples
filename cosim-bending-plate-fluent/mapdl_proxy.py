@@ -35,32 +35,72 @@ class Mapdl_SessionProxy(object):
             input_variables: List[str]
             output_variables: List[str]    
     
-        def __init__(self, handle):
-            self.__handle = handle
-            self.__regions = list()
-            self.__variables = list()
-            self.__structural = False
-            self.__thermal = False
-            self.__analysis_type = "Steady"
+        def __init__(self, solver):
+            self._solver = solver
+            self.__clear()
+            if self._solver.version < 24.2:
+                msg = "PySystemCoupling integration requires MAPDL version 24.2 or later."
+                msg += f" Current version is {self._solver.version}"
+                raise RuntimeError(msg)
 
         @property
         def participant_type(self) -> str:
             return "MAPDL"
 
         def get_variables(self):
+            self._parse_setup()
             return self.__variables
 
         def get_regions(self):
+            self._parse_setup()
             return self.__regions
 
         def get_analysis_type(self) -> str:
-            return self.__analysis_type
+            analysis_type = int(self._solver.get(entity="ACTIVE", item1="ANTY"))
+            if analysis_type == 0:
+                return "Steady"
+            elif analysis_type == 4:
+                return "Transient"
+            else:
+                raise MapdlRuntimeError(f"Unsupported analysis type: {analysis_type}")
 
         def connect(self, host, port, name):
-            self.__handle._mapdl_session.run(f"scconnect,{host},{port},{name}")
+            self._solver.run(f"scconnect,{host},{port},{name}")
 
         def solve(self):
-            self.__handle._mapdl_session.solve()
+            self._solver.solve()
+
+        def __clear(self):
+            self.__regions = list()
+            self.__variables = list()
+            self.__structural = False
+            self.__thermal = False
+
+        def _parse_setup(self):
+            self.__clear()
+            # TODO: need to actually check element types connected to the FSI region
+            et_index = self._solver.get(entity="ACTIVE", item1="TYPE")
+            element_type = int(self._solver.get(entity="ETYP", entnum=et_index, item1="ATTR", it1num="ENAM"))
+            # TODO: the elements list may not be complete
+            if element_type in {181,185,186,187,190,225,226,227,281,285}:
+                self._activate_structural()
+            if element_type in {131,132,225,226,227,278,279,291}:
+                self._activate_thermal()
+
+            num_comp = int(self._solver.get(entity = "COMP", item1 = "NCOMP"))
+            for curr_comp in range(1, num_comp + 1):
+                region_name = self._solver.get(entity = "COMP", entnum = curr_comp, item1 = "NAME")                
+                comp_type = int(self._solver.get(entity="COMP", entnum=region_name, item1="TYPE"))
+                # if type of component is "Nodes" (1), check for SF FSIN
+                if comp_type == 1:
+                    res = self._solver.sflist(node = region_name, lab = "FSIN")
+                    if "There are no nodal fluid solid interfaces" not in str(res):
+                        self._add_surface_region(region_name)
+                # if type of component is "Elements" (2), check for BFE FVIN
+                elif comp_type == 2:
+                    res = self._solver.bfelist(node = region_name, lab = "FVIN")
+                    if "There are no" not in str(res):
+                        self._add_volume_region(region_name)
 
         def _add_surface_region(self, region_name):
             region = Mapdl_SessionProxy.SystemCouplingInterface.Region(name=region_name, display_name = f"System Coupling (Surface) Region {len(self.__regions)}", topology = "Surface", input_variables = list(), output_variables = list())
@@ -131,36 +171,8 @@ class Mapdl_SessionProxy(object):
             self.__analysis_type = "Transient"
 
     def __init__(self, *args, **kwargs):
-        self.system_coupling = Mapdl_SessionProxy.SystemCouplingInterface(self)
         self._mapdl_session = pymapdl.launch_mapdl(*args, **kwargs)
+        self.system_coupling = Mapdl_SessionProxy.SystemCouplingInterface(self._mapdl_session)        
 
     def __getattr__(self, attr):
-        if attr == "sf": return self.__sf_handle
-        elif attr == "bfe": return self.__bfe_handle
-        elif attr == "antype": return self.__antype_handle
-        elif attr == "et": return self.__et_handle
-        else: return getattr(self._mapdl_session, attr)
-
-    def __sf_handle(self, *args, **kwargs):
-        region_name = args[0]
-        self.system_coupling._add_surface_region(region_name)
-        return getattr(self._mapdl_session, "sf")(*args, **kwargs)
-
-    def __bfe_handle(self, *args, **kwargs):
-        region_name = args[0]
-        self.system_coupling._add_volume_region(region_name)
-        return getattr(self._mapdl_session, "bfe")(*args, **kwargs)
-
-    def __antype_handle(self, *args, **kwargs):
-        if args[0] == 0: self.system_coupling._set_steady()
-        elif args[0] == 4: self.system_coupling._set_transient()
-        return getattr(self._mapdl_session, "antype")(*args, **kwargs)
-
-    def __et_handle(self, *args, **kwargs):
-        etype = args[1]
-        # TODO: the elements list is far from complete
-        if etype in {186}:
-            self.system_coupling._activate_structural()
-        if etype in {70,90}:
-            self.system_coupling._activate_thermal()
-        return getattr(self._mapdl_session, "et")(*args, **kwargs)
+        return getattr(self._mapdl_session, attr)
