@@ -4,7 +4,7 @@ import ansys.systemcoupling.core as pysyc
 #===
 
 # launch Fluent session and read in mesh file
-pipe_fluid_session = pyfluent.launch_fluent(product_version="24.1.0", start_transcript=False)
+pipe_fluid_session = pyfluent.launch_fluent(start_transcript=False)
 pipe_fluid_mesh_file = "pipe_fluid.msh.h5"
 pipe_fluid_session.file.read(file_type="mesh", file_name=pipe_fluid_mesh_file)
 
@@ -27,7 +27,7 @@ pipe_fluid_session.solution.run_calculation.iter_count = 1
 #===
 
 # launch another Fluent session and read in mesh file
-pipe_solid_session = pyfluent.launch_fluent(product_version="24.1.0", start_transcript=False)
+pipe_solid_session = pyfluent.launch_fluent(start_transcript=False)
 pipe_solid_mesh_file = "pipe_solid.msh.h5"
 pipe_solid_session.file.read(file_type="mesh", file_name=pipe_solid_mesh_file)
 
@@ -58,7 +58,7 @@ pipe_solid_session.solution.run_calculation.iter_count = 1
 #===
 
 # launch System Coupling session
-syc = pysyc.launch(version = "24.1")
+syc = pysyc.launch()
 syc.start_output()
 
 # add two Fluent sessions above as participants

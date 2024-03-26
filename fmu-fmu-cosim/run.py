@@ -1,6 +1,6 @@
 import ansys.systemcoupling.core as pysyc
 
-syc = pysyc.launch(version = "24.1")
+syc = pysyc.launch()
 syc.start_output()
 
 # add FMU participants
