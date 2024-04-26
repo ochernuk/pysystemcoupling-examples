@@ -113,10 +113,11 @@ syc = pysyc.launch(version = "24.2")
 assert(syc.ping())
 syc.start_output()
 
-solver = Solver()
+solver1 = Solver()
+solver2 = Solver()
 
-part1_name = syc.setup.add_participant(participant_session = solver)
-part2_name = syc.setup.add_participant(participant_session = solver)
+part1_name = syc.setup.add_participant(participant_session = solver1)
+part2_name = syc.setup.add_participant(participant_session = solver2)
 
 # temporary: fix up region discretization type
 # TODO: fix this in the setup protocol
