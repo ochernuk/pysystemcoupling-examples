@@ -6,9 +6,9 @@ from typing import List
 import subprocess
 import os
 
-class Solver(object):
+class Solver():
 
-    class SystemCoupling(object):
+    class SystemCoupling():
     
         @dataclass
         class Variable:
@@ -73,41 +73,31 @@ class Solver(object):
 
         def connect(self, host, port, name):
             print(f"Connecting! Host: {host}, port: {port}, name: {name}", flush=True)
-            self.solver.start_solver_process(host, port, name)
+            self.standardOutput = open(f"{name}.stdout", "w")        
+            pythonScript = os.path.abspath("participant.py")
+            # temporary hack (TODO: fix): need to set SYSC_ROOT
+            os.environ["SYSC_ROOT"] = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling")
+            batchScript = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling", "Participants", "Scripts", "PythonScript.bat")
+            fullPathExeWithArguments = f'"{batchScript}" --pyscript "{pythonScript}" --schost {host} --scport {port} --scname {name}'
+            print(f"Full executable: {fullPathExeWithArguments}")
+            self.participant_process = subprocess.Popen(            
+                fullPathExeWithArguments,
+                stdin=subprocess.PIPE,
+                stdout=self.standardOutput,
+                stderr=self.standardOutput,
+                shell=True,
+            )
+            if not (self.participant_process and self.participant_process.poll() == None):
+                raise RuntimeError("Something went wrong. Check participant log output.")
             print("Connected!", flush=True)
 
         def solve(self):
             print("Solving!", flush=True)
-            self.solver.wait_for_solve_to_finish()
+            self.participant_process.communicate()
             print("Finished solving!", flush=True)
 
     def __init__(self):
         self.system_coupling = Solver.SystemCoupling(self)
-
-    def system_coupling(self):
-        return self.system_coupling
-
-    def start_solver_process(self, host, port, name):
-        self.standardOutput = open(f"{name}.stdout", "w")        
-        pythonScript = os.path.abspath("participant.py")
-        # temporary hack (TODO: fix): need to set SYSC_ROOT
-        os.environ["SYSC_ROOT"] = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling")
-        batchScript = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling", "Participants", "Scripts", "PythonScript.bat")
-        fullPathExeWithArguments = f'"{batchScript}" --pyscript "{pythonScript}" --schost {host} --scport {port} --scname {name}'
-        print(f"Full executable: {fullPathExeWithArguments}")
-        self.participant_process = subprocess.Popen(            
-            fullPathExeWithArguments,
-            stdin=subprocess.PIPE,
-            stdout=self.standardOutput,
-            stderr=self.standardOutput,
-            shell=True,
-        )
-        if not (self.participant_process and self.participant_process.poll() == None):
-            raise RuntimeError("Something went wrong. Check participant log output.")
-
-    def wait_for_solve_to_finish(self):
-        # wait for the solver process to finish
-        self.participant_process.communicate()
 
 syc = pysyc.launch(version = "24.2")
 assert(syc.ping())
