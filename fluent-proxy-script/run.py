@@ -78,10 +78,7 @@ class Solver():
             print(f"Connecting! Host: {host}, port: {port}, name: {name}", flush=True)
             self.standardOutput = open(f"{name}.stdout", "w")        
             pythonScript = os.path.abspath("participant.py")
-            # temporary hack (TODO: fix): need to set SYSC_ROOT
-            os.environ["SYSC_ROOT"] = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling")
-            batchScript = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling", "Participants", "Scripts", "PythonScript.bat")
-            fullPathExeWithArguments = f'"{batchScript}" --pyscript "{pythonScript}" --schost {host} --scport {port} --scname {name}'
+            fullPathExeWithArguments = f'python "{pythonScript}" --schost {host} --scport {port} --scname {name}'
             print(f"Full executable: {fullPathExeWithArguments}")
             self.participant_process = subprocess.Popen(            
                 fullPathExeWithArguments,
@@ -108,7 +105,7 @@ my_solver = Solver()
 #===
 
 # launch Fluent session and read in mesh file
-pipe_fluid_session = pyfluent.launch_fluent(start_transcript=False)
+pipe_fluid_session = pyfluent.launch_fluent(start_transcript=False, product_version="24.2")
 pipe_fluid_mesh_file = "pipe_fluid.msh.h5"
 pipe_fluid_session.file.read(file_type="mesh", file_name=pipe_fluid_mesh_file)
 
@@ -131,7 +128,7 @@ pipe_fluid_session.solution.run_calculation.iter_count = 1
 #===
 
 # launch System Coupling session
-syc = pysyc.launch()
+syc = pysyc.launch(version="24.2")
 syc.start_output()
 
 # add two Fluent sessions above as participants
@@ -157,6 +154,12 @@ syc.setup.add_data_transfer(
 
 syc.setup.solution_control.maximum_iterations = 2
 
+import pprint
+all_messages = syc.setup.get_status_messages()
+all_error_messages = [message for message in all_messages if message["level"] == "Error"]
+print("Printing all error messages (if there are any):")
+pprint.pprint(all_error_messages)
+print("===============================================")
 #===
 
 # solve the coupled analysis
