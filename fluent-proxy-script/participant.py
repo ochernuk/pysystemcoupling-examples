@@ -2,12 +2,7 @@ import os
 import sys
 import numpy as np
 
-# include these few lines before importing SCP library
-if sys.platform.startswith("win"):
-    for p in os.environ["PYTHON_DLL_PATH"].split(os.pathsep):
-        if p: os.add_dll_directory(p)
-
-from pyExt import SystemCouplingParticipant as scp
+import ansys.systemcoupling.partlib as scp
 
 import argparse
 

@@ -78,10 +78,7 @@ class Solver():
             print(f"Connecting! Host: {host}, port: {port}, name: {name}", flush=True)
             self.standardOutput = open(f"{name}.stdout", "w")        
             pythonScript = os.path.abspath("participant.py")
-            # temporary hack (TODO: fix): need to set SYSC_ROOT
-            os.environ["SYSC_ROOT"] = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling")
-            batchScript = os.path.join(os.environ["AWP_ROOT242"], "SystemCoupling", "Participants", "Scripts", "PythonScript.bat")
-            fullPathExeWithArguments = f'"{batchScript}" --pyscript "{pythonScript}" --schost {host} --scport {port} --scname {name}'
+            fullPathExeWithArguments = f'python "{pythonScript}" --schost {host} --scport {port} --scname {name}'
             print(f"Full executable: {fullPathExeWithArguments}")
             self.participant_process = subprocess.Popen(            
                 fullPathExeWithArguments,
