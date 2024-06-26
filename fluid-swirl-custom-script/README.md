@@ -14,6 +14,11 @@ to an outlet).
 
 ![Source](source_cloud.png)
 
+The script that provides the source data is executed in a separate process and it
+imports SCP library to send the data to Fluent. The process structure looks like this:
+
+![Processes](process_struct.png)
+
 In the end, the pathline.png file is produced that shows the streamlines.
 
 ![Results](result.png)
