@@ -12,7 +12,7 @@ The starting point for this example is SpaceClaim geometry files.
 The Python script will generate the mesh and set up the Fluent problem and have
 System Coupling solve the coupled analysis.
 
-# Instrutions
+# Instructions
 
 - This example requires PyFluent codegen for now. Eventually, all that will be
   required is `pip install ansys.fluent.core`.

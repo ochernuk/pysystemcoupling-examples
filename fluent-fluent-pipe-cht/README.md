@@ -12,7 +12,7 @@ The starting point for this example is Fluent mesh files.
 The Python script will set up the Fluent problem and have
 System Coupling solve the coupled analysis.
 
-# Instrutions
+# Instructions
 
 - Install pyFluent
 

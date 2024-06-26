@@ -5,7 +5,7 @@ a steady FSI analysis using System Coupling.
 
 ![Setup](bending_plate.png)
 
-# Instrutions
+# Instructions
 
 This requires latest v242 build, so set AWP_ROOT environment variable 
 to AWP_ROOT242. On Windows:
