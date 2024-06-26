@@ -18,7 +18,7 @@ In the end, the pathline.png file is produced that shows the streamlines.
 
 ![Results](result.png)
 
-# Instrutions
+# Instructions
 
 This case requires v242 System Coupling and Fluent (v241 Fluent might be ok).
 
